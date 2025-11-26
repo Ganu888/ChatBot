@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>College Admin Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body class="admin-body">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <span>GP</span>
+                <h2>Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-link active" data-section="dashboard">Dashboard</button>
+                <button class="nav-link" data-section="fees">Fees Management</button>
+                <button class="nav-link" data-section="documents">Admission Documents</button>
+                <button class="nav-link" data-section="library">Library</button>
+                <button class="nav-link" data-section="hostel">Hostel & Facilities</button>
+                <button class="nav-link" data-section="scholarships">Scholarships</button>
+                <button class="nav-link" data-section="faculty">Faculty & Staff</button>
+                <button class="nav-link" data-section="principal">Principal Info</button>
+                <button class="nav-link" data-section="events">Events</button>
+                <button class="nav-link" data-section="timings">College Timings</button>
+                <button class="nav-link" data-section="student-fees">Student Fees</button>
+                <button class="nav-link" data-section="tickets">Help Tickets</button>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header class="dashboard-header">
+                <button class="menu-toggle" id="menu-toggle">☰</button>
+                <div class="breadcrumbs" id="breadcrumbs">Dashboard</div>
+                <div class="header-actions">
+                    <span id="admin-name">Welcome, Admin</span>
+                    <button id="logout-btn" class="ghost-btn">Logout</button>
+                </div>
+            </header>
+
+            <section class="content-panel active" id="dashboard">
+                <div class="stats-grid">
+                    <article class="stat-card">
+                        <h3>Total Students</h3>
+                        <p id="stat-students">0</p>
+                    </article>
+                    <article class="stat-card">
+                        <h3>Total Fees Collected</h3>
+                        <p id="stat-fees">₹0</p>
+                    </article>
+                    <article class="stat-card">
+                        <h3>Open Tickets</h3>
+                        <p id="stat-tickets">0</p>
+                    </article>
+                    <article class="stat-card">
+                        <h3>Upcoming Events</h3>
+                        <p id="stat-events">0</p>
+                    </article>
+                </div>
+                <div class="dashboard-actions">
+                    <button class="primary-btn" data-action="open-modal" data-modal="fees-form">Add Fees</button>
+                    <button class="primary-btn" data-action="open-modal" data-modal="event-form">Add Event</button>
+                    <button class="ghost-btn" data-section="tickets">View Tickets</button>
+                </div>
+                <div class="grid two-column">
+                    <article class="card">
+                        <h4>Pending Tickets</h4>
+                        <ul id="pending-tickets" class="simple-list"></ul>
+                    </article>
+                    <article class="card">
+                        <h4>Upcoming Events</h4>
+                        <ul id="upcoming-events" class="simple-list"></ul>
+                    </article>
+                </div>
+            </section>
+
+            <section class="content-panel" id="fees">
+                <div class="panel-header">
+                    <h2>Fees Management</h2>
+                    <div class="panel-actions">
+                        <select id="fees-filter">
+                            <option value="">All Categories</option>
+                            <option value="OPEN">OPEN</option>
+                            <option value="OBC">OBC</option>
+                            <option value="SC">SC</option>
+                            <option value="ST">ST</option>
+                            <option value="NT">NT</option>
+                            <option value="NTA">NTA</option>
+                        </select>
+                        <button class="primary-btn" data-action="open-modal" data-modal="fees-form">Add Fees</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Total Fees</th>
+                                <th>Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fees-table"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="content-panel" id="documents">
+                <div class="panel-header">
+                    <h2>Admission Documents</h2>
+                    <div class="tabs" role="tablist">
+                        <button class="tab active" data-doc-tab="12th">12th Based</button>
+                        <button class="tab" data-doc-tab="Diploma">Diploma</button>
+                        <button class="tab" data-doc-tab="Management">Management Quota</button>
+                        <button class="tab" data-doc-tab="BSc">BSc</button>
+                    </div>
+                    <button class="primary-btn" data-action="open-modal" data-modal="document-form">Add Document</button>
+                </div>
+                <div id="documents-list" class="documents-list"></div>
+            </section>
+
+            <section class="content-panel" id="library">
+                <div class="panel-header">
+                    <h2>Library Management</h2>
+                    <button class="primary-btn" data-action="open-modal" data-modal="library-book-form">Add Category</button>
+                </div>
+                <div class="grid two-column">
+                    <article class="card">
+                        <h3>Book Categories</h3>
+                        <div class="table-wrapper small">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Books</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="library-books-table"></tbody>
+                            </table>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <h3>Library Timings</h3>
+                        <form id="library-timings-form" class="form-grid two-column">
+                            <label>Issue Start<input type="text" name="issue_start_time" required /></label>
+                            <label>Issue End<input type="text" name="issue_end_time" required /></label>
+                            <label>Return Start<input type="text" name="return_start_time" required /></label>
+                            <label>Return End<input type="text" name="return_end_time" required /></label>
+                            <label>Lunch Start<input type="text" name="lunch_break_start" required /></label>
+                            <label>Lunch End<input type="text" name="lunch_break_end" required /></label>
+                            <button type="submit" class="primary-btn full-width">Save Timings</button>
+                        </form>
+                    </article>
+                </div>
+            </section>
+
+            <section class="content-panel" id="hostel">
+                <div class="panel-header">
+                    <h2>Hostel & Facilities</h2>
+                </div>
+                <div id="hostel-list" class="cards-list"></div>
+            </section>
+
+            <section class="content-panel" id="scholarships">
+                <div class="panel-header">
+                    <h2>Scholarships</h2>
+                    <div class="panel-actions">
+                        <select id="scholarship-filter">
+                            <option value="">All Categories</option>
+                            <option value="SC">SC</option>
+                            <option value="ST">ST</option>
+                            <option value="OBC">OBC</option>
+                            <option value="EWS">EWS</option>
+                            <option value="TFWS">TFWS</option>
+                        </select>
+                        <button class="primary-btn" data-action="open-modal" data-modal="scholarship-form">Add Scholarship</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scholarship-table"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="content-panel" id="faculty">
+                <div class="panel-header">
+                    <h2>Faculty & Staff</h2>
+                    <button class="primary-btn" data-action="open-modal" data-modal="faculty-form">Add Faculty</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Designation</th>
+                                <th>Contact</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="faculty-table"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="content-panel" id="principal">
+                <div class="panel-header">
+                    <h2>Principal Information</h2>
+                </div>
+                <form id="principal-form" class="form-grid two-column">
+                    <label>Name<input type="text" name="name" required /></label>
+                    <label>Contact<input type="text" name="contact" required /></label>
+                    <label>Email<input type="email" name="email" required /></label>
+                    <label>Photo URL<input type="url" name="photo_url" /></label>
+                    <label class="wide">Education<textarea name="education" rows="3" required></textarea></label>
+                    <label class="wide">Achievements<textarea name="achievements" rows="3"></textarea></label>
+                    <label class="wide">Medals<textarea name="medals" rows="2"></textarea></label>
+                    <button type="submit" class="primary-btn">Save Principal Info</button>
+                </form>
+            </section>
+
+            <section class="content-panel" id="events">
+                <div class="panel-header">
+                    <h2>Events Management</h2>
+                    <div class="panel-actions">
+                        <select id="events-filter">
+                            <option value="">All Types</option>
+                            <option value="Cultural">Cultural</option>
+                            <option value="Sports">Sports</option>
+                            <option value="Technical">Technical</option>
+                            <option value="Academic">Academic</option>
+                        </select>
+                        <button class="primary-btn" data-action="open-modal" data-modal="event-form">Add Event</button>
+                    </div>
+                </div>
+                <div class="calendar-view">
+                    <ul id="events-list" class="simple-list"></ul>
+                </div>
+            </section>
+
+            <section class="content-panel" id="timings">
+                <div class="panel-header">
+                    <h2>College Timings</h2>
+                </div>
+                <form id="college-timings-form" class="form-grid two-column">
+                    <label>Weekday Opening<input type="text" name="opening_time" required /></label>
+                    <label>Weekday Closing<input type="text" name="closing_time" required /></label>
+                    <label>Saturday Opening<input type="text" name="saturday_opening" required /></label>
+                    <label>Saturday Closing<input type="text" name="saturday_closing" required /></label>
+                    <button type="submit" class="primary-btn">Save Timings</button>
+                </form>
+            </section>
+
+            <section class="content-panel" id="student-fees">
+                <div class="panel-header">
+                    <h2>Student Fees Payment</h2>
+                    <div class="panel-actions">
+                        <input type="text" id="student-search" placeholder="Search by Student ID" />
+                        <button class="primary-btn" data-action="open-modal" data-modal="student-fee-form">Add Payment</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>ID</th>
+                                <th>Category</th>
+                                <th>Total</th>
+                                <th>Paid</th>
+                                <th>Remaining</th>
+                                <th>Semester</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-fees-table"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="content-panel" id="tickets">
+                <div class="panel-header">
+                    <h2>Help Tickets</h2>
+                    <select id="tickets-filter">
+                        <option value="">All</option>
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Contact</th>
+                                <th>Topic</th>
+                                <th>Query</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickets-table"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3 id="modal-title">Modal Title</h3>
+                <button id="close-modal" aria-label="Close modal">✕</button>
+            </header>
+            <form id="modal-form"></form>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="js/admin.js" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>College Help Desk Chatbot</title>
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body class="chatbot-body">
+    <div class="chatbot-wrapper">
+        <header class="chatbot-header">
+            <div class="chatbot-brand">
+                <div class="logo-placeholder">GP</div>
+                <div>
+                    <h1> MBES, Ambajogai</h1>
+                    <p>Smart College Help Desk</p>
+                </div>
+            </div>
+            <a href="login.html" class="ghost-btn ghost-btn--small">Admin Login</a>
+            <button id="clear-chat" class="ghost-btn">Clear Chat</button>
+        </header>
+
+        <section class="home-hero">
+            <div class="home-hero__content">
+                <p class="home-hero__eyebrow">Mahatma Basaveshwar Education Society's</p>
+                <h2>College of Engineering, Ambajogai</h2>
+                <p class="home-hero__lead">
+                    Established in 1963, the institute continues to ignite intellectual curiosity and empower
+                    students through transformational engineering education. Use the digital help desk to explore
+                    programmes, admission details, scholarships, facilities, and support services.
+                </p>
+                <div class="home-hero__actions">
+                    <a href="#chat-window" class="primary-btn">Start chatting</a>
+                    <a href="https://www.coea.ac.in/" target="_blank" rel="noreferrer" class="ghost-btn">
+                        Visit College Site
+                    </a>
+                </div>
+            </div>
+            <div class="home-hero__media" aria-hidden="true">
+                <img
+                    src="https://www.coea.ac.in/wp-content/uploads/2024/08/WhatsApp-Image-2024-08-10-at-11.21.14-AM.jpeg"
+                    alt="College of Engineering Ambajogai campus"
+                    loading="lazy"
+                />
+            </div>
+        </section>
+
+        <main class="chatbot-main">
+            <section id="chat-window" class="chat-window" aria-live="polite"></section>
+            <div id="typing-indicator" class="typing-indicator hidden">
+                <span></span><span></span><span></span>
+            </div>
+        </main>
+
+        <section class="quick-actions" aria-label="Quick actions">
+            <button data-action="fees" class="chip-btn">Fees Information</button>
+            <button data-action="admission" class="chip-btn">Admission Process</button>
+            <button data-action="scholarships" class="chip-btn">Scholarships</button>
+            <button data-action="library" class="chip-btn">Library Timings</button>
+            <button data-action="hostel" class="chip-btn">Hostel Information</button>
+            <button data-action="faculty" class="chip-btn">Contact Staff</button>
+            <button data-action="events" class="chip-btn">Events</button>
+            <button data-action="help" class="chip-btn danger">I Need Help</button>
+        </section>
+
+        <section id="admission-panel" class="info-panel hidden" aria-live="polite">
+            <label for="admission-category">Select admission route to view requirements</label>
+            <select id="admission-category">
+                <option value="">Choose a route</option>
+                <option value="first-year">First Year Diploma (SSC)</option>
+                <option value="direct-second-year">Direct Second Year (HSC/Vocational)</option>
+                <option value="management">Management Quota</option>
+                <option value="international">International / NRI</option>
+                <option value="bsc">B.Sc.-based Lateral Entry</option>
+            </select>
+            <p class="info-panel__hint">Pick a route to see required documents and steps.</p>
+        </section>
+
+        <section id="fees-panel" class="info-panel hidden" aria-live="polite">
+            <label for="fees-category">Select your category to view fee structure</label>
+            <select id="fees-category">
+                <option value="">Loading categories...</option>
+            </select>
+            <p class="info-panel__hint">Pick a category to see the detailed fee structure for your category.</p>
+        </section>
+
+        <section id="scholarship-panel" class="info-panel scholarship-panel hidden" aria-live="polite">
+            <label for="scholarship-category">Select your category to view scholarship details</label>
+            <select id="scholarship-category">
+                <option value="">Loading categories...</option>
+            </select>
+            <p class="scholarship-hint">Once you pick a category, the chatbot will show the scholarships you can apply for.</p>
+        </section>
+
+        <form id="chat-form" class="chat-input">
+            <input type="text" id="user-message" autocomplete="off" placeholder="Ask me anything about GP Ambajogai..." />
+            <button type="submit" class="primary-btn">Send</button>
+        </form>
+
+        <section id="help-form" class="help-form hidden">
+            <h2>Need Assistance?</h2>
+            <p>Please share your details so we can create a help ticket.</p>
+            <form id="ticket-form">
+                <div class="input-group">
+                    <label for="help-name">Full Name</label>
+                    <input type="text" id="help-name" required />
+                </div>
+                <div class="input-group">
+                    <label for="help-contact">Contact Number / Email</label>
+                    <input type="text" id="help-contact" required />
+                </div>
+                <div class="input-group">
+                    <label for="help-query">How can we help?</label>
+                    <textarea id="help-query" rows="3" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="ghost-btn" id="cancel-help">Cancel</button>
+                    <button type="submit" class="primary-btn">Submit Ticket</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <script src="js/chatbot.js" defer></script>
+    
+    <!-- Optional: Add widget to existing page -->
+    <!-- Uncomment the line below to add widget to your main chatbot page -->
+     <script src="js/widget.js"></script> 
+</body>
+
+</html>
