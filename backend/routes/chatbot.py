@@ -226,7 +226,7 @@ def _build_system_prompt():
 #
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
 generation_config = {
     "temperature": float(os.getenv("GEMINI_TEMPERATURE", "0.7")),
