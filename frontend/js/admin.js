@@ -818,24 +818,114 @@ async function savePrincipal(event) {
 }
 
 // ------------------------ Events ------------------------
+function normalizeDateValue(value) {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+}
+
+function formatEventDate(value) {
+    const date = normalizeDateValue(value);
+    if (!date) return value || "-";
+    return date.toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+
+function createEventListItem(event) {
+    const li = document.createElement("li");
+    li.className = "event-item";
+    li.innerHTML = `
+        <div class="event-info">
+            <strong>${event.event_name}</strong>
+            <span>${event.event_type} • ${formatEventDate(event.event_date)}</span>
+        </div>
+        <div class="event-actions">
+            <button class="ghost-btn" data-action="edit-event" data-id="${event.id}">Edit</button>
+            <button class="ghost-btn danger" data-action="delete-event" data-id="${event.id}">Delete</button>
+        </div>
+    `;
+    return li;
+}
+
+function renderEventColumn(containerId, events, emptyMessage) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = "";
+    if (!events.length) {
+        const empty = document.createElement("li");
+        empty.className = "event-empty";
+        empty.textContent = emptyMessage;
+        container.appendChild(empty);
+        return;
+    }
+    events.forEach((event) => container.appendChild(createEventListItem(event)));
+}
+
 async function loadEvents() {
     try {
         const filter = document.getElementById("events-filter").value;
         const query = filter ? `?type=${encodeURIComponent(filter)}` : "";
         const data = await apiCall(`/events${query}`);
-        const list = document.getElementById("events-list");
         const dashboardList = document.getElementById("upcoming-events");
-        list.innerHTML = "";
-        dashboardList.innerHTML = "";
+        if (dashboardList) {
+            dashboardList.innerHTML = "";
+        }
 
-        data.forEach((event) => {
-            const li = document.createElement("li");
-            li.innerHTML = `<strong>${event.event_name}</strong> (${event.event_type}) - ${event.event_date}`;
-            list.appendChild(li);
-            dashboardList.appendChild(li.cloneNode(true));
+        const sorted = [...data].sort((a, b) => {
+            const dateA = normalizeDateValue(a.event_date) || 0;
+            const dateB = normalizeDateValue(b.event_date) || 0;
+            return dateA - dateB;
         });
 
-        document.getElementById("stat-events").textContent = data.length;
+        const today = normalizeDateValue(new Date());
+        const upcoming = [];
+        const current = [];
+        const past = [];
+
+        sorted.forEach((event) => {
+            const eventDate = normalizeDateValue(event.event_date);
+            if (!eventDate || !today) {
+                past.push(event);
+                return;
+            }
+            if (eventDate.getTime() === today.getTime()) {
+                current.push(event);
+            } else if (eventDate > today) {
+                upcoming.push(event);
+            } else {
+                past.push(event);
+            }
+        });
+
+        renderEventColumn("events-upcoming", upcoming, "No upcoming events scheduled.");
+        renderEventColumn("events-current", current, "No events happening today.");
+        renderEventColumn("events-past", past, "No previous events recorded.");
+
+        const setCount = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        };
+        setCount("events-upcoming-count", upcoming.length);
+        setCount("events-current-count", current.length);
+        setCount("events-past-count", past.length);
+
+        if (dashboardList) {
+            upcoming.slice(0, 4).forEach((event) => {
+                const li = document.createElement("li");
+                li.innerHTML = `<strong>${event.event_name}</strong> (${event.event_type}) - ${formatEventDate(event.event_date)}`;
+                dashboardList.appendChild(li);
+            });
+        }
+
+        const statEvents = document.getElementById("stat-events");
+        if (statEvents) {
+            statEvents.textContent = upcoming.length;
+        }
     } catch (err) {
         showToast(err.message, "error");
     }

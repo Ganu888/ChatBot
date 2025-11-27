@@ -248,8 +248,28 @@
                         <button class="primary-btn" data-action="open-modal" data-modal="event-form">Add Event</button>
                     </div>
                 </div>
-                <div class="calendar-view">
-                    <ul id="events-list" class="simple-list"></ul>
+                <div class="events-columns">
+                    <article class="event-column">
+                        <div class="event-column-header">
+                            <h3>Upcoming Events</h3>
+                            <span id="events-upcoming-count" class="badge">0</span>
+                        </div>
+                        <ul id="events-upcoming" class="event-list"></ul>
+                    </article>
+                    <article class="event-column">
+                        <div class="event-column-header">
+                            <h3>Ongoing Today</h3>
+                            <span id="events-current-count" class="badge">0</span>
+                        </div>
+                        <ul id="events-current" class="event-list"></ul>
+                    </article>
+                    <article class="event-column">
+                        <div class="event-column-header">
+                            <h3>Outgoing / Past</h3>
+                            <span id="events-past-count" class="badge">0</span>
+                        </div>
+                        <ul id="events-past" class="event-list"></ul>
+                    </article>
                 </div>
             </section>
 

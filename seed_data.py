@@ -340,8 +340,8 @@ def seed_principal():
     record = _get_seed_records(
         "principal",
         {
-            "name": "Dr. A. B. Patil",
-            "education": "Ph.D. in Electronics Engineering",
+            "name": "Dr. Nandkumar Rawabavale",
+            "education": "Ph.D. in Mechanical  Engineering",
             "achievements": "Published 25+ research papers.",
             "medals": "Best Principal Award 2022",
             "contact": "+91-9999999999",

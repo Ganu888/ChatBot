@@ -1,4 +1,4 @@
-:root {
+ :root {
     --primary-color: #4a90e2;
     --secondary-color: #50e3c2;
     --danger-color: #e74c3c;
@@ -13,7 +13,17 @@
     --transition: all 0.25s ease;
 }
 
-*,
+
+/*
+:root {
+    background-image: url("D:\College Help Desk\college-chatbot\frontend\css\Screenshot 2025-11-26 120838.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+}
+*/
+
 *::before,
 *::after {
     box-sizing: border-box;
@@ -88,6 +98,7 @@ select:focus {
     border: 1px solid var(--primary-color);
     padding: 0.65rem 1.25rem;
 }
+
 .ghost-btn--small {
     padding: 0.35rem 0.9rem;
     font-size: 0.85rem;
@@ -812,6 +823,106 @@ tr:hover td {
     gap: 0.75rem;
 }
 
+.events-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+}
+
+.event-column {
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.25rem;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+}
+
+.event-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.event-column-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+.event-column .badge {
+    background: #eef2ff;
+    color: #4338ca;
+    border-radius: 999px;
+    padding: 0.15rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.event-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.event-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: #fdfdff;
+}
+
+.event-info strong {
+    display: block;
+    color: #111827;
+    margin-bottom: 0.2rem;
+}
+
+.event-info span {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.event-empty {
+    border: 1px dashed #dbeafe;
+    border-radius: 14px;
+    padding: 1.25rem;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.ghost-btn.danger {
+    color: #e11d48;
+    border-color: rgba(225, 29, 72, 0.35);
+}
+
+.ghost-btn.danger:hover {
+    background: rgba(225, 29, 72, 0.1);
+}
+
+@media (max-width: 768px) {
+    .event-item {
+        flex-direction: column;
+    }
+}
+
 /* Utilities ----------------------------------------------- */
 .loading-spinner {
     border: 3px solid rgba(0, 0, 0, 0.1);
@@ -929,10 +1040,11 @@ tr:hover td {
         gap: 0.75rem;
         align-items: flex-start;
     }
+
     .ghost-btn1 {
         display: block;
         width: 100%;
         text-align: center;
-        margin-top:0px;
+        margin-top: 0px;
     }
 }
