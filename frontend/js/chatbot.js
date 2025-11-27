@@ -5,7 +5,20 @@ const chatbotState = {
     feesDropdownStatus: { loading: false, loaded: false },
     scholarshipsData: [],
     scholarshipsDropdownStatus: { loading: false, loaded: false },
+    sessionId: null,
 };
+function getChatSessionId() {
+    if (!chatbotState.sessionId) {
+        const cryptoObj = window.crypto || window.msCrypto;
+        if (cryptoObj?.randomUUID) {
+            chatbotState.sessionId = cryptoObj.randomUUID();
+        } else {
+            chatbotState.sessionId = `sess_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+        }
+    }
+    return chatbotState.sessionId;
+}
+
 
 const quickActionMap = {
     fees: "Can you tell me about the fees structure?",
@@ -95,21 +108,54 @@ function displayMessage(text, sender = "bot") {
     const message = document.createElement("div");
     message.classList.add("message", sender);
 
-    const transmissionLabel =
-        sender === "bot"
-            ? '<div class="transmission-label">AI Transmission</div>'
-            : "";
+    if (sender === "bot") {
+        const label = document.createElement("div");
+        label.className = "transmission-label";
+        label.textContent = "AI Transmission";
+        message.appendChild(label);
+    }
 
-    message.innerHTML = `
-        ${transmissionLabel}
-        <div class="message-body">
-            ${formatMessageText(text)}
-        </div>
-        <time>${formatTimestamp()}</time>
-    `;
+    const body = document.createElement("div");
+    body.className = "message-body";
+    message.appendChild(body);
+
+    const timestamp = document.createElement("time");
+    timestamp.textContent = formatTimestamp();
+    message.appendChild(timestamp);
 
     chatWindow.appendChild(message);
     chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    if (sender === "bot") {
+        animateMessageWords(body, text);
+    } else {
+        body.innerHTML = formatMessageText(text);
+    }
+}
+
+function animateMessageWords(container, text = "") {
+    const chatWindow = document.getElementById("chat-window");
+    const tokens = text.match(/\S+\s*/g) || [];
+
+    if (!tokens.length) {
+        container.innerHTML = formatMessageText(text);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        return;
+    }
+
+    let rendered = "";
+    let index = 0;
+
+    const interval = setInterval(() => {
+        rendered += tokens[index];
+        container.innerHTML = formatMessageText(rendered);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        index += 1;
+
+        if (index >= tokens.length) {
+            clearInterval(interval);
+        }
+    }, 150);
 }
 
 function showTypingIndicator() {
@@ -133,10 +179,13 @@ async function sendMessage(messageText) {
         const response = await fetch("/api/chatbot/message", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: messageText }),
+            body: JSON.stringify({ message: messageText, sessionId: getChatSessionId() }),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Unable to fetch response.");
+        if (data.sessionId) {
+            chatbotState.sessionId = data.sessionId;
+        }
         displayMessage(data.response, "bot");
     } catch (error) {
         displayMessage(error.message, "bot");

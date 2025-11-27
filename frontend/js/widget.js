@@ -84,6 +84,7 @@ class ChatWidget {
         this.primaryColor = options.primaryColor || '#00D26A';
         this.collegeName = options.collegeName || 'COLLEGE SUPPORT';
         this.username = options.username || null;
+        this.sessionId = this.generateSessionId();
         
         this.state = {
             isOpen: false,
@@ -110,6 +111,14 @@ class ChatWidget {
         this.welcomeShown = false;
         this.initVoiceRecognition();
         this.init();
+    }
+
+    generateSessionId() {
+        const cryptoObj = window.crypto || window.msCrypto;
+        if (cryptoObj?.randomUUID) {
+            return cryptoObj.randomUUID();
+        }
+        return `widget_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
     }
 
     init() {
@@ -178,13 +187,18 @@ class ChatWidget {
     updatePanelPosition() {
         const panel = document.getElementById('chat-panel');
         if (!panel) return;
-        
+
         const viewportHeight = window.innerHeight;
         const panelHeight = parseInt(panel.style.height) || 600;
-        // Calculate safe bottom position: ensure panel doesn't exceed viewport
-        // Add 20px margin from top to prevent cutoff
+
+        // When expanded, pin 16px from bottom; otherwise dynamically position.
+        if (this.state.isExpanded) {
+            panel.style.bottom = '16px';
+            return;
+        }
+
         const safeBottom = Math.max(16, viewportHeight - panelHeight - 20);
-        panel.style.bottom = safeBottom + 'px';
+        panel.style.bottom = `${safeBottom}px`;
     }
 
     getApiBase() {
@@ -1163,13 +1177,21 @@ class ChatWidget {
         const panel = document.getElementById('chat-panel');
         
         if (this.state.isExpanded) {
-            panel.style.width = '556px';
-            panel.style.height = '630px';
+            const maxWidth = Math.min(window.innerWidth - 32, 900);
+            const maxHeight = Math.min(window.innerHeight - 32, 720);
+            panel.style.width = `${maxWidth}px`;
+            panel.style.height = `${maxHeight}px`;
+            panel.style.left = '50%';
+            panel.style.right = 'auto';
+            panel.style.transform = 'translateX(-50%)';
         } else {
             panel.style.width = '436px';
             panel.style.height = '600px';
+            panel.style.left = 'auto';
+            panel.style.right = '24px';
+            panel.style.transform = 'none';
         }
-        
+
         // Recalculate panel position after size change to ensure it stays within viewport
         this.updatePanelPosition();
     }
@@ -1333,7 +1355,7 @@ class ChatWidget {
             const response = await fetch(this.apiEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message }),
+                body: JSON.stringify({ message, sessionId: this.sessionId }),
             });
 
             const data = await response.json();
@@ -1343,6 +1365,9 @@ class ChatWidget {
             }
 
             this.hideTypingIndicator();
+            if (data.sessionId) {
+                this.sessionId = data.sessionId;
+            }
             this.addMessage(data.response || 'I apologize, but I could not process your request.', 'bot');
         } catch (error) {
             this.hideTypingIndicator();

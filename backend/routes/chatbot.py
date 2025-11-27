@@ -1,4 +1,7 @@
+import logging
 import os
+import time
+import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -10,6 +13,11 @@ from backend.database import db
 from backend.models import AdmissionDocuments, FeesStructure, Scholarships, HelpTickets
 
 from seed_data import get_chatbot_snapshot  # noqa: E402
+
+import google.generativeai as genai
+
+
+logger = logging.getLogger(__name__)
 
 chatbot_bp = Blueprint("chatbot", __name__, url_prefix="/api/chatbot")
 
@@ -116,9 +124,18 @@ def _format_faculty_section(items: List[Dict[str, Any]]) -> str:
     if not items:
         return "Faculty data not available."
     lines = []
+    # Header row with bold-style labels (Markdown table)
+    lines.append("| **Name** | **Designation** | **Department** | **Mobile** | **Email** | **Subjects** |")
+    lines.append("|---------|-----------------|---------------|-----------|-----------|-------------|")
     for member in items:
+        name = member.get("name", "Faculty")
+        designation = member.get("designation", "")
+        department = member.get("department", "")
+        contact = member.get("contact", "") or "N/A"
+        email = member.get("email", "") or "N/A"
+        subjects = member.get("subjects_taught", "")
         lines.append(
-            f"- {member.get('name', 'Faculty')}, {member.get('designation', '')}, {member.get('department', '')} | Subjects: {member.get('subjects_taught', '')}"
+            f"| **{name}** | **{designation}** | **{department}** | {contact} | {email} | {subjects} |"
         )
     return "\n".join(lines)
 
@@ -174,7 +191,7 @@ def _build_system_prompt():
         "",
         "Principal:",
         (
-            f"Name: {principal.get('name')}\nEducation: {principal.get('education')}\nAchievements: {principal.get('achievements')}"
+            f"Name: {principal.get('name')}\nMobile: {principal.get('contact', 'N/A')}\nEmail: {principal.get('email', 'N/A')}\nEducation: {principal.get('education')}\nAchievements: {principal.get('achievements')}"
             if principal
             else "Data not available."
         ),
@@ -202,6 +219,74 @@ def _build_system_prompt():
     ]
 
     return "\n".join(prompt)
+
+
+#
+# Gemini configuration
+#
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+
+generation_config = {
+    "temperature": float(os.getenv("GEMINI_TEMPERATURE", "0.7")),
+    "top_p": float(os.getenv("GEMINI_TOP_P", "0.95")),
+    "top_k": int(os.getenv("GEMINI_TOP_K", "40")),
+    "max_output_tokens": int(os.getenv("GEMINI_MAX_OUTPUT", "1024")),
+}
+
+# In-memory chat history per session (simple, non-persistent)
+_chat_sessions: Dict[str, Any] = {}
+_gemini_enabled = False
+
+
+def _configure_gemini():
+    global _gemini_enabled
+    if not GEMINI_API_KEY:
+        logger.warning("GEMINI_API_KEY is not set; chatbot will use fallback responses.")
+        return
+
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        _gemini_enabled = True
+        logger.info("Gemini client configured successfully with model %s", GEMINI_MODEL_NAME)
+    except Exception as exc:  # pragma: no cover - configuration errors
+        logger.error("Failed to configure Gemini client: %s", exc)
+        _gemini_enabled = False
+
+
+_configure_gemini()
+
+
+def _new_chat_session() -> Optional[Any]:
+    if not _gemini_enabled:
+        return None
+
+    try:
+        model = genai.GenerativeModel(
+            model_name=GEMINI_MODEL_NAME,
+            generation_config=generation_config,
+            system_instruction=_build_system_prompt(),
+        )
+        return model.start_chat(history=[])
+    except Exception as exc:
+        logger.error("Unable to create Gemini chat session: %s", exc)
+        return None
+
+
+def _get_or_create_chat_session(session_id: str):
+    """
+    Returns a Gemini chat session for the given session_id.
+    Creates a new one if it does not exist.
+    """
+    chat = _chat_sessions.get(session_id)
+    if chat is not None:
+        return chat
+
+    chat = _new_chat_session()
+    if chat is not None:
+        _chat_sessions[session_id] = chat
+    return chat
 
 
 def _generate_local_answer(user_message: str) -> str:
@@ -249,7 +334,7 @@ def _generate_local_answer(user_message: str) -> str:
         if principal:
             sections.append(
                 "Principal information:\n"
-                f"Name: {principal.get('name')}\nEducation: {principal.get('education')}\nAchievements: {principal.get('achievements')}"
+                f"Name: {principal.get('name')}\nMobile: {principal.get('contact', 'N/A')}\nEmail: {principal.get('email', 'N/A')}\nEducation: {principal.get('education')}\nAchievements: {principal.get('achievements')}"
             )
         else:
             sections.append("Principal information is not yet available.")
@@ -273,65 +358,74 @@ def _generate_local_answer(user_message: str) -> str:
             " number so our staff from Government Polytechnic, Ambajogai can reach out to you."
         )
 
+    # If no specific section matches, return an empty string so that
+    # the Gemini model (or a generic fallback) can handle open-ended queries.
     if not sections:
-        overview = [
-            "I am a college assistant for Government Polytechnic, Ambajogai, Maharashtra.",
-            "",
-            "Here is a quick overview of the college information I can share:",
-            "",
-            "Fees Structure:",
-            _format_fees_section(fees),
-            "",
-            "Admission Documents:",
-            _format_documents_section(documents),
-            "",
-            "Library:",
-            _format_library_section(books, timings),
-            "",
-            "Hostel:",
-            _format_hostel_section(hostel),
-            "",
-            "Scholarships:",
-            _format_scholarships_section(scholarships),
-            "",
-            "College Timings:",
-            (
-                f"Weekdays: {college_timings.get('opening_time')} - {college_timings.get('closing_time')}, "
-                f"Saturday: {college_timings.get('saturday_opening')} - {college_timings.get('saturday_closing')}"
-                if college_timings
-                else "Timings data not available."
-            ),
-            "",
-            "You can ask me specific questions about fees, admissions, scholarships, library, hostel, faculty, events,"
-            " or timings.",
-        ]
-        return "\n".join(overview)
+        return ""
 
     return "\n\n".join(sections)
 
 
 @chatbot_bp.route("/message", methods=["POST"])
 def chatbot_message():
+    """
+    Main chatbot endpoint.
+
+    - Uses Gemini (google.generativeai) with rich college context when GEMINI_API_KEY is configured.
+    - Falls back to the existing rule-based responder if the key is missing or Gemini fails.
+    """
     try:
         data = request.get_json(silent=True) or {}
-        user_message = data.get("message", "").strip()
+        user_message = (data.get("message") or "").strip()
+        session_id = (data.get("sessionId") or data.get("session_id") or "").strip()
+        if not session_id:
+            session_id = uuid.uuid4().hex
+
         if not user_message:
             return jsonify({"error": "Message is required."}), 400
 
-        reply = _generate_local_answer(user_message)
+        bot_reply: Optional[str] = None
+
+        logger.info("Chatbot request session=%s message=%s", session_id, user_message[:200])
+
+        # Try Gemini first if API key is configured
+        if _gemini_enabled:
+            try:
+                chat = _get_or_create_chat_session(session_id)
+                if chat is not None:
+                    response = chat.send_message(user_message)
+                    # google-generativeai SDK exposes .text for the combined text response
+                    bot_reply = getattr(response, "text", None) or ""
+                else:
+                    logger.warning("Gemini chat session could not be created for session=%s", session_id)
+            except Exception as gemini_error:
+                # Log but do not break the experience; we will fall back
+                logger.exception("Error while calling Gemini for session %s: %s", session_id, gemini_error)
+
+        # Fallback to local, structured answer if Gemini is not available or failed
+        if not bot_reply or not bot_reply.strip():
+            bot_reply = _generate_local_answer(user_message)
+
+        # Absolute safety net
+        if not bot_reply or not bot_reply.strip():
+            bot_reply = (
+                "I'm here to help! Please ask me about fees, admissions, scholarships, "
+                "library, hostel, faculty, events, or timings."
+            )
         
-        # Ensure we always return a response
-        if not reply or reply.strip() == "":
-            reply = "I'm here to help! Please ask me about fees, admissions, scholarships, library, hostel, faculty, events, or timings."
-        
-        return jsonify({"response": reply}), 200
+        return jsonify({"response": bot_reply, "sessionId": session_id}), 200
     except Exception as e:
         # Log the error for debugging
         print(f"Error in chatbot_message: {str(e)}")
-        return jsonify({
+        return (
+            jsonify(
+                {
             "error": "An error occurred while processing your request.",
-            "response": "I apologize, but I encountered an error. Please try again or contact support."
-        }), 500
+                    "response": "I apologize, but I encountered an error. Please try again or contact support.",
+                }
+            ),
+            500,
+        )
 
 
 @chatbot_bp.route("/help-ticket", methods=["POST"])
